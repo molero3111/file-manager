@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     image: file-manager-app-img  # Built once and used for replicas
     deploy:
-      replicas: 3  # Spawn 3 instances of fm-app
+      replicas: 4  # Spawn 3 instances of fm-app
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
