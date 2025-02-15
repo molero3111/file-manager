@@ -1,0 +1,78 @@
+services:
+  app:
+    image: file-manager-app-img
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fm-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    networks:
+      - fm-network
+
+  webserver:
+    image: nginx:alpine
+    container_name: fm-webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - fm-network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: fm-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - fm-network
+
+  redis:
+    image: redis:alpine
+    container_name: fm-redis
+    restart: unless-stopped
+    networks:
+      - fm-network
+   
+  reverb:
+    image: file-manager-app-img
+    container_name: fm-reverb
+    restart: unless-stopped
+    working_dir: /var/www/html
+    env_file:
+      - .env
+    environment:
+      - REVERB_HOST=localhost
+      - REVERB_PORT=8081
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8081:8081"  # ✅ Ensure the WebSocket port is exposed
+    command: php artisan reverb:start --debug
+    networks:
+      - fm-network
+    depends_on:
+      - app
+      - redis
+
+volumes:
+  dbdata:
+
+networks:
+  fm-network:
+    driver: bridge

@@ -1,0 +1,86 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: file-manager-app-img  # Built once and used for replicas
+    deploy:
+      replicas: 3  # Spawn 3 instances of fm-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    networks:
+      - fm-network
+
+  webserver:
+    image: nginx:alpine
+    container_name: fm-webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - fm-network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: fm-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - fm-network
+
+  redis:
+    image: redis:alpine
+    container_name: fm-redis
+    restart: unless-stopped
+    networks:
+      - fm-network
+
+  queue:
+    image: file-manager-app-img
+    container_name: fm-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: php artisan queue:work
+    networks:
+      - fm-network
+    depends_on:
+      - app
+      - redis
+  
+  horizon:
+    image: file-manager-app-img
+    container_name: fm-horizon
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: php artisan horizon
+    networks:
+      - fm-network
+    depends_on:
+      - app
+      - redis
+
+volumes:
+  dbdata:
+
+networks:
+  fm-network:
+    driver: bridge
