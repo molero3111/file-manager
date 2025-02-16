@@ -19,23 +19,30 @@ To run this project locally, follow these steps:
     cd file-manager
     ```
 
-2. **Copy [.env.example](http://_vscodecontentref_/1) to [.env](http://_vscodecontentref_/2)**:
+2. **Copy [.env.example](http://_vscodecontentref_/1) to [.env](http://_vscodecontentref_/2) and Update Pusher Credentials**:
     ```bash
     cp .env.example .env
+    ```
+    Update the Pusher environment variables in the [.env](http://_vscodecontentref_/3) file with your credentials from the Pusher website. You can sign up for free and use the free package they provide for testing:
+    ```env
+    PUSHER_APP_ID=your-app-id
+    PUSHER_APP_KEY=your-app-key
+    PUSHER_APP_SECRET=your-app-secret
+    PUSHER_APP_CLUSTER=your-app-cluster
     ```
 
 3. **Build the Docker Containers**:
     ```bash
-    docker-compose build
+    docker compose build
     ```
 
 4. **Start the Docker Containers**:
     ```bash
-    docker-compose up -d
+    docker compose up -d
     ```
 
 5. **Fix Permissions (if needed)**:
-    If you encounter errors related to permissions on the [storage](http://_vscodecontentref_/3) and [bootstrap](http://_vscodecontentref_/4) folders, run the following commands within the container:
+    If you encounter errors related to permissions on the [storage](http://_vscodecontentref_/4) and [bootstrap](http://_vscodecontentref_/5) folders, run the following commands within the container:
     ```bash
     docker-compose exec app chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
     docker-compose exec app chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
@@ -43,8 +50,8 @@ To run this project locally, follow these steps:
 
 6. **Restart the Containers**:
     ```bash
-    docker-compose down
-    docker-compose up --build -d
+    docker compose down
+    docker compose up --build -d
     ```
 
 ## Basic Usage
