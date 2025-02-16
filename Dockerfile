@@ -61,6 +61,17 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 # Copy Supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Create directories for file uploads and set permissions
+RUN mkdir -p /file-manager/uploads /file-manager/files \
+    && chown -R www-data:www-data /file-manager/uploads /file-manager/files \
+    && chmod -R 775 /file-manager/uploads /file-manager/files
+
+# Increase PHP upload limits
+RUN echo "upload_max_filesize = 20G" >> /usr/local/etc/php/conf.d/uploads.ini
+RUN echo "post_max_size = 20G" >> /usr/local/etc/php/conf.d/uploads.ini
+RUN echo "max_execution_time = 3600" >> /usr/local/etc/php/conf.d/uploads.ini
+RUN echo "max_input_time = 3600" >> /usr/local/etc/php/conf.d/uploads.ini
+
 # Expose port 9000 for PHP-FPM and 80 for Nginx
 EXPOSE 9000 80
 

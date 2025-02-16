@@ -74,19 +74,44 @@
         });
     }
 
-    function uploadFile() {
+    async function uploadFile() {
         const input = document.getElementById('fileInput');
         const file = input.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-        fetch('/api/files', {
-            method: 'POST',
-            body: formData
-        }).then(res => {
-            if (res.ok) {
-                getFiles();
-            }
-        });
+        const chunkSize = 200 * 1024 * 1024; // 200MB
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Unique file ID for chunked uploads
+        const fileName = file.name; // Original file name
+
+        for (let i = 0; i < totalChunks; i++) {
+            console.log(`Uploading chunk ${i + 1} of ${totalChunks}`);
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('file', chunk);
+            formData.append('fileId', fileId);
+            formData.append('totalChunks', totalChunks);
+            formData.append('chunkIndex', i);
+
+            await fetch('/api/files', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-File-ID': fileId,
+                    'X-Total-Chunks': totalChunks,
+                    'X-Chunk-Index': i,
+                    'X-File-Name': fileName // Send the original file name
+                }
+            }).then(res => {
+                if (!res.ok) {
+                    throw new Error('Chunk upload failed');
+                }
+                console.log(`Chunk ${i + 1} uploaded successfully`);
+            });
+        }
+
+        getFiles();
     }
 </script>
 @endsection
