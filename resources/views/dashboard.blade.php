@@ -164,8 +164,8 @@
         function setupPusher() {
             Pusher.logToConsole = true;
 
-            var pusher = new Pusher('e7635cbb52466e6fac9b', {
-                cluster: 'us2'
+            var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+                cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
             });
 
             var channel = pusher.subscribe('file-upload');
