@@ -11,6 +11,8 @@ services:
     volumes:
       - .:/var/www/html
       - filedata:/file-manager
+    env_file:
+      - .env
     networks:
       - fm-network
 

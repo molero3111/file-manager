@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileController;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes

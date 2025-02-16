@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Jobs\SendUploadProgress;
 
 class FileController extends Controller
 {
@@ -37,11 +38,13 @@ class FileController extends Controller
         }
         $uploadedFile->move($chunkPath, $request->header('X-Chunk-Index'));
 
-        // Check if all chunks have been uploaded
+        // Dispatch the job to send upload progress
         $totalChunks = (int) $request->header('X-Total-Chunks');
-        $currentChunk = (int) $request->header('X-Chunk-Index') + 1;
+        $currentChunk = (int) $request->header('X-Chunk-Index');
+        SendUploadProgress::dispatch($fileId, $currentChunk, $totalChunks);
 
-        if ($currentChunk === $totalChunks) {
+        // Check if all chunks have been uploaded
+        if ($currentChunk + 1 === $totalChunks) {
             // Combine chunks into a single file
             $finalFilePath = "/file-manager/uploads/{$fileId}_final";
             $finalFile = fopen($finalFilePath, 'wb');
