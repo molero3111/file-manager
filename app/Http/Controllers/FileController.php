@@ -12,8 +12,8 @@ class FileController extends Controller
     // List all files for the authenticated user
     public function index()
     {
-        $files = Auth::user()->files;
-        return response()->json($files);
+        // ['data' => $files, 'test' => Auth::user()->id]
+        return response()->json(Auth::user()->files);
     }
 
     public function store(Request $request)

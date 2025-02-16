@@ -1,6 +1,5 @@
 @extends('layout')
 @section('content')
-    <h2>FILES</h2>
     <input type="file" id="fileInput" class="d-none" onchange="uploadFile()" />
     <button id="upload-btn" class="btn btn-primary mb-3"
         onclick="document.getElementById('fileInput').click()">Upload</button>
@@ -27,14 +26,22 @@
         const progressBar = document.getElementById('uploadProgressBar');
         const uploadBtn = document.getElementById('upload-btn');
         document.addEventListener('DOMContentLoaded', function () {
-            getFiles();
-            setupPusher();
+            if (!localStorage.getItem('token')) {
+                window.location.href = '/login';
+            } else {
+                getFiles();
+                setupPusher();
+            }
         });
 
         function getFiles() {
+            const token = localStorage.getItem('token');
             fetch("/api/files", {
                 method: "GET",
-                headers: { "Content-Type": "application/json" }
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
             }).then(res => res.json()).then(data => {
                 if (data) {
                     const tableBody = document.getElementById('filesTableBody');
@@ -42,14 +49,14 @@
                     data.forEach(file => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                                                            <td>${file.id}</td>
-                                                            <td>${file.name}</td>
-                                                            <td>${formatFileSize(file.size)}</td>
-                                                            <td>${file.created_at}</td>
-                                                            <td>
-                                                                <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
-                                                            </td>
-                                                        `;
+                                <td>${file.id}</td>
+                                <td>${file.name}</td>
+                                <td>${formatFileSize(file.size)}</td>
+                                <td>${file.created_at}</td>
+                                <td>
+                                    <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+                                </td>
+                            `;
                         tableBody.appendChild(row);
                     });
                 }
@@ -72,9 +79,13 @@
         }
 
         function deleteFile(fileId) {
+            const token = localStorage.getItem('token');
             fetch(`/api/files/${fileId}`, {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" }
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
             }).then(res => {
                 if (res.ok) {
                     getFiles();
@@ -88,7 +99,8 @@
             const chunkSize = 200 * 1024 * 1024; // 200MB
             const totalChunks = Math.ceil(file.size / chunkSize);
             const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Unique file ID for chunked uploads
-            const fileName = file.name; 
+            const fileName = file.name;
+            const token = localStorage.getItem('token');
             uploadBtn.disabled = true;
             progressBarContainer.style.display = 'block';
             for (let i = 0; i < totalChunks; i++) {
@@ -107,6 +119,7 @@
                     method: 'POST',
                     body: formData,
                     headers: {
+                        'Authorization': `Bearer ${token}`,
                         'X-File-ID': fileId,
                         'X-Total-Chunks': totalChunks,
                         'X-Chunk-Index': i,
@@ -119,8 +132,6 @@
                     console.log(`Chunk ${i + 1} uploaded successfully`);
                 });
             }
-
-            getFiles();
         }
 
         function setupPusher() {
@@ -143,6 +154,7 @@
                             progressBar.innerText = `0%`;
                             uploadBtn.disabled = false;
                             progressBarContainer.style.display = 'none';
+                            getFiles();
                         }, 2000);
                     }
                 }

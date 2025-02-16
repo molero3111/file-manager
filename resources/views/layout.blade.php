@@ -35,17 +35,16 @@
         function logout() {
             const token = localStorage.getItem("token");
             if (!token) return;
-
+            localStorage.removeItem("token");
             fetch("/api/logout", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
             }).then(() => {
-                localStorage.removeItem("token");
                 window.location.href = "/login";
             }).catch(error => console.error("Logout failed", error));
         }
 
-        function showToast(message, timeout = 0, type = 0, ) {
+        function showToast(message, timeout = 0, type = 0,) {
             const toastContainer = document.getElementById("toast-container");
 
             const toastElement = document.createElement("div");

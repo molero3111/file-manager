@@ -20,10 +20,6 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-Route::get('/test-load', function () {
-    return view('testload');
-});
-
 Route::get('/login', function () {
     return view('login');
 });
@@ -34,4 +30,4 @@ Route::get('/register', function () {
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware('auth');
+});
