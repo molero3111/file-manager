@@ -27,5 +27,9 @@ Route::get('/test-load', function (Request $request) {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::resource('files', FileController::class)->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::resource('files', FileController::class);
+    Route::get('/files/{id}/download', [FileController::class, 'download']);
+});

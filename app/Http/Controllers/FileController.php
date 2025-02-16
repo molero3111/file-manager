@@ -93,4 +93,17 @@ class FileController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function download($id)
+    {
+        $file = File::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+
+        $filePath = "/file-manager/files/{$file->id}_{$file->name}";
+
+        if (!file_exists($filePath)) {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+
+        return response()->download($filePath, $file->name);
+    }
 }

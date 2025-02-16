@@ -49,14 +49,15 @@
                     data.forEach(file => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                                <td>${file.id}</td>
-                                <td>${file.name}</td>
-                                <td>${formatFileSize(file.size)}</td>
-                                <td>${file.created_at}</td>
-                                <td>
-                                    <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
-                                </td>
-                            `;
+                        <td>${file.id}</td>
+                        <td>${file.name}</td>
+                        <td>${formatFileSize(file.size)}</td>
+                        <td>${file.created_at}</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
+                            <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+                        </td>
+                    `;
                         tableBody.appendChild(row);
                     });
                 }
@@ -90,6 +91,32 @@
                 if (res.ok) {
                     getFiles();
                 }
+            });
+        }
+
+        function downloadFile(fileId) {
+            const token = localStorage.getItem('token');
+            fetch(`/api/files/${fileId}/download`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }).then(res => {
+                if (res.ok) {
+                    return res.blob();
+                } else {
+                    throw new Error('Download failed');
+                }
+            }).then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = ''; // The filename will be set by the server
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }).catch(error => {
+                console.error(error);
             });
         }
 
