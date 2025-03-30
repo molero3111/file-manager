@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-fm
+  labels:
+    app: db-fm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-fm
+  template:
+    metadata:
+      labels:
+        app: db-fm
+    spec:
+      containers:
+        - name: db-fm
+          image: mysql:8.0
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: root_password
+          volumeMounts:
+            - name: dbdata
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: dbdata
+          persistentVolumeClaim:
+            claimName: dbdata-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dbdata-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-fm
+  namespace: file-manager
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: app-fm
+  template:
+    metadata:
+      labels:
+        app: app-fm
+    spec:
+      containers:
+        - name: app-fm
+          image: file-manager-app-img
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: file-manager-config
+            - secretRef:
+                name: file-manager-secret
+          volumeMounts:
+            - name: file-storage
+              mountPath: /file-manager
+      volumes:
+        - name: file-storage
+          emptyDir: {}
