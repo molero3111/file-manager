@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: app-fm
+  name: api-fm
   namespace: file-manager
 spec:
   type: NodePort
@@ -10,4 +10,4 @@ spec:
       targetPort: 80
       nodePort: 8080 # Expose the app on port 8080 of the host machine
   selector:
-    app: app-fm
+    app: api-fm

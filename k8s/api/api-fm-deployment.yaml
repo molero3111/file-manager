@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-fm
+  name: api-fm
   namespace: file-manager
 spec:
   replicas: 4
   selector:
     matchLabels:
-      app: app-fm
+      app: api-fm
   template:
     metadata:
       labels:
-        app: app-fm
+        app: api-fm
     spec:
       containers:
-        - name: app-fm
-          image: file-manager-app-img
+        - name: api-fm
+          image: file-manager-api-img
           ports:
-            - containerPort: 80
+            - containerPort: 9000 # PHP-FPM listens on port 9000
           envFrom:
             - configMapRef:
                 name: file-manager-config

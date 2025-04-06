@@ -20,24 +20,19 @@ spec:
           env:
             - name: MYSQL_DATABASE
               valueFrom:
-                secretKeyRef:
-                  name: db-secrets
-                  key: database
-            - name: MYSQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: db-secrets
-                  key: username
+                configMapKeyRef:
+                  name: file-manager-config
+                  key: DB_DATABASE
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
-                  key: password
+                  name: file-manager-secret
+                  key: DB_PASSWORD
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
-                  key: root_password
+                  name: file-manager-secret
+                  key: DB_PASSWORD
           volumeMounts:
             - name: dbdata
               mountPath: /var/lib/mysql
