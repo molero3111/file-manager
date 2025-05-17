@@ -22,3 +22,4 @@ supervisord.log
 supervisord.pid
 node_modules
 filedata
+k8s/configmap-secrets/*.env
