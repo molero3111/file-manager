@@ -74,5 +74,3 @@ RUN echo "upload_max_filesize = 20G" >> /usr/local/etc/php/conf.d/uploads.ini
 RUN echo "post_max_size = 20G" >> /usr/local/etc/php/conf.d/uploads.ini
 RUN echo "max_execution_time = 3600" >> /usr/local/etc/php/conf.d/uploads.ini
 RUN echo "max_input_time = 3600" >> /usr/local/etc/php/conf.d/uploads.ini
-
-CMD ["php-fpm"]

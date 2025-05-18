@@ -4,7 +4,7 @@ metadata:
   name: api-fm
   namespace: file-manager
 spec:
-  replicas: 4
+  replicas: 1
   selector:
     matchLabels:
       app: api-fm
@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: api-fm
-          image: file-manager-api-img
+          image: molero3111/file_manager:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 9000 # PHP-FPM listens on port 9000
           envFrom:
