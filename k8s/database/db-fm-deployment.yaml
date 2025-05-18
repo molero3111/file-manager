@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-fm
+  namespace: file-manager
+  labels:
+    app: db-fm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-fm
+  template:
+    metadata:
+      labels:
+        app: db-fm
+    spec:
+      containers:
+        - name: db-fm
+          image: mysql:8.0
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: file-manager-config
+                  key: DB_DATABASE
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: file-manager-secret
+                  key: DB_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: file-manager-secret
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: dbdata
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: dbdata
+          persistentVolumeClaim:
+            claimName: dbdata-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dbdata-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

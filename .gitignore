@@ -6,6 +6,7 @@
 /storage/*.key
 /vendor
 .env
+.env.secret
 .env.backup
 .env.production
 .phpunit.result.cache
@@ -18,5 +19,8 @@ yarn-error.log
 /.idea
 /.vscode
 supervisord.log
+supervisord.pid
 node_modules
 filedata
+k8s/configmap-secrets/*.env
+**/file-manager-api-img.tar

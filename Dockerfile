@@ -48,8 +48,11 @@ WORKDIR /var/www/html
 # Copy the Laravel application files
 COPY . .
 
+# Copy the Docker-specific .env file
+COPY .env.docker .env
+
 # Install Composer dependencies
-RUN composer install --optimize-autoloader --no-dev
+RUN composer install --optimize-autoloader
 
 # Set permissions for Laravel storage and bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
@@ -71,9 +74,3 @@ RUN echo "upload_max_filesize = 20G" >> /usr/local/etc/php/conf.d/uploads.ini
 RUN echo "post_max_size = 20G" >> /usr/local/etc/php/conf.d/uploads.ini
 RUN echo "max_execution_time = 3600" >> /usr/local/etc/php/conf.d/uploads.ini
 RUN echo "max_input_time = 3600" >> /usr/local/etc/php/conf.d/uploads.ini
-
-# Expose port 9000 for PHP-FPM and 80 for Nginx
-EXPOSE 9000 80
-
-# Start Supervisor to manage Nginx and PHP-FPM
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

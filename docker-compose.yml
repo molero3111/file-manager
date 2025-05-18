@@ -13,6 +13,9 @@ services:
       - filedata:/file-manager
     env_file:
       - .env
+    command: "php-fpm"
+    ports:
+      - "9000:9000"  # PHP-FPM listens on port 9000
     networks:
       - fm-network
 
