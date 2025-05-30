@@ -74,6 +74,22 @@ services:
     depends_on:
       - api-fm
       - redis-fm
+  
+    reverb-fm:
+    image: file-manager-app-img
+    container_name: reverb-fm
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - filedata:/file-manager
+    env_file:
+      - .env
+    command: php artisan reverb:start
+    networks:
+      - fm-network
+    depends_on:
+      - api-fm
 
 volumes:
   dbdata:
