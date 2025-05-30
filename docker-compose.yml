@@ -1,5 +1,5 @@
 services:
-  app:
+  api-fm:
     build: 
       context: .
       dockerfile: Dockerfile
@@ -14,17 +14,20 @@ services:
     env_file:
       - .env
     command: "php-fpm"
-    ports:
-      - "9000:9000"  # PHP-FPM listens on port 9000
     networks:
       - fm-network
+    depends_on:
+      - db-fm
+      - redis-fm
 
-  webserver:
+  webserver-fm:
     image: nginx:alpine
-    container_name: fm-webserver
+    container_name: webserver-fm
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "${WEBSERVER_PORT:-8080}:80"
+    env_file:
+      - .env
     volumes:
       - .:/var/www/html
       - ./docker/nginx.conf:/etc/nginx/nginx.conf
@@ -32,11 +35,11 @@ services:
     networks:
       - fm-network
     depends_on:
-      - app
+      - api-fm
 
-  db:
+  db-fm:
     image: mysql:8.0
-    container_name: fm-db
+    container_name: db-fm
     restart: unless-stopped
     env_file:
       - .env
@@ -50,31 +53,16 @@ services:
     networks:
       - fm-network
 
-  redis:
+  redis-fm:
     image: redis:alpine
-    container_name: fm-redis
+    container_name: redis-fm
     restart: unless-stopped
     networks:
       - fm-network
-
-  queue:
-    image: file-manager-app-img
-    container_name: fm-queue
-    restart: unless-stopped
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
-      - filedata:/file-manager
-    command: php artisan queue:work
-    networks:
-      - fm-network
-    depends_on:
-      - app
-      - redis
   
-  horizon:
+  horizon-fm:
     image: file-manager-app-img
-    container_name: fm-horizon
+    container_name: horizon-fm
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
@@ -84,8 +72,8 @@ services:
     networks:
       - fm-network
     depends_on:
-      - app
-      - redis
+      - api-fm
+      - redis-fm
 
 volumes:
   dbdata:
