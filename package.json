@@ -6,19 +6,20 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@laravel/echo-react": "^2.1.4",
         "@popperjs/core": "^2.11.6",
         "@vitejs/plugin-react": "^4.3.4",
         "axios": "^1.6.4",
         "bootstrap": "^5.2.3",
+        "laravel-echo": "^2.1.4",
         "laravel-vite-plugin": "^1.0.0",
+        "pusher-js": "^8.4.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "sass": "^1.56.1",
         "vite": "^5.4.14"
     },
     "dependencies": {
-        "laravel-echo": "^2.0.0",
-        "pusher-js": "^8.4.0",
         "react-router-dom": "^7.1.5"
     }
 }

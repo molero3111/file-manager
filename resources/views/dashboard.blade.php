@@ -30,7 +30,8 @@
                 window.location.href = '/login';
             } else {
                 getFiles();
-                setupPusher();
+                // setupPusher();
+                setupReverb();
             }
         });
 
@@ -49,15 +50,15 @@
                     data.forEach(file => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                        <td>${file.id}</td>
-                        <td>${file.name}</td>
-                        <td>${formatFileSize(file.size)}</td>
-                        <td>${file.created_at}</td>
-                        <td>
-                            <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
-                            <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
-                        </td>
-                    `;
+                                <td>${file.id}</td>
+                                <td>${file.name}</td>
+                                <td>${formatFileSize(file.size)}</td>
+                                <td>${file.created_at}</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
+                                    <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+                                </td>
+                            `;
                         tableBody.appendChild(row);
                     });
                 }
@@ -186,6 +187,41 @@
                     }
                 }
             });
+        }
+
+        function setupReverb() {
+            // Enable Echo debug logging if needed
+            window.Echo = new window.Echo.default({
+                broadcaster: 'pusher',
+                key: '{{ env('REVERB_APP_KEY') }}',
+                cluster: 'mt-1', // any string, required by pusher-js
+                wsHost: window.location.hostname,
+                wsPort: 80,
+                wssPort: 443,
+                forceTLS: window.location.protocol === 'https:',
+                enabledTransports: ['ws', 'wss'],
+                wsPath: '/reverb',
+                disableStats: true,
+            });
+
+            window.Echo.channel('file-upload')
+                .listen('UploadProgress', function (data) {
+                    if (data.progress > progressBar.getAttribute('aria-valuenow')) {
+                        progressBar.style.width = `${data.progress}%`;
+                        progressBar.setAttribute('aria-valuenow', data.progress);
+                        progressBar.innerText = `${data.progress.toFixed(2)}%`;
+                        if (data.progress == 100) {
+                            setTimeout(() => {
+                                progressBar.style.width = `0%`;
+                                progressBar.setAttribute('aria-valuenow', 0);
+                                progressBar.innerText = `0%`;
+                                uploadBtn.disabled = false;
+                                progressBarContainer.style.display = 'none';
+                                getFiles();
+                            }, 2000);
+                        }
+                    }
+                });
         }
     </script>
 @endsection

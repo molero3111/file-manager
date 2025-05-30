@@ -75,7 +75,7 @@ services:
       - api-fm
       - redis-fm
   
-    reverb-fm:
+  reverb-fm:
     image: file-manager-app-img
     container_name: reverb-fm
     restart: unless-stopped
@@ -85,7 +85,7 @@ services:
       - filedata:/file-manager
     env_file:
       - .env
-    command: php artisan reverb:start
+    command: php artisan reverb:start --debug
     networks:
       - fm-network
     depends_on:

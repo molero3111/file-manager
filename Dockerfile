@@ -39,6 +39,16 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && docker-php-ext-enable redis \
     && apk del .build-deps
 
+# Install Node.js and npm (LTS version)
+RUN apk add --no-cache nodejs npm
+
+# Install ext-ev for event loop support (recommended for Reverb)
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS autoconf \
+    && apk add --no-cache libev-dev \
+    && pecl install ev \
+    && docker-php-ext-enable ev \
+    && apk del .build-deps
+
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
