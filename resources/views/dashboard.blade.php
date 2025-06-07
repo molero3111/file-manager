@@ -193,6 +193,9 @@
             const socket = io({
                 path: '/ws/socket.io',
                 transports: ['websocket'],
+                auth: {
+                    token: localStorage.getItem('token')
+                }
             });
 
             socket.on('connect', () => {
