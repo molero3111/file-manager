@@ -30,7 +30,8 @@
                 window.location.href = '/login';
             } else {
                 getFiles();
-                setupPusher();
+                // setupPusher();
+                setupWebSocket();
             }
         });
 
@@ -49,15 +50,15 @@
                     data.forEach(file => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                        <td>${file.id}</td>
-                        <td>${file.name}</td>
-                        <td>${formatFileSize(file.size)}</td>
-                        <td>${file.created_at}</td>
-                        <td>
-                            <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
-                            <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
-                        </td>
-                    `;
+                            <td>${file.id}</td>
+                            <td>${file.name}</td>
+                            <td>${formatFileSize(file.size)}</td>
+                            <td>${file.created_at}</td>
+                            <td>
+                                <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
+                                <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+                            </td>
+                        `;
                         tableBody.appendChild(row);
                     });
                 }
@@ -185,6 +186,28 @@
                         }, 2000);
                     }
                 }
+            });
+        }
+
+        function setupWebSocket() {
+            const socket = io({
+                path: '/ws/socket.io',
+                transports: ['websocket'],
+            });
+
+            socket.on('connect', () => {
+                console.log('WebSocket connected:', socket.id);
+                // Send a healthcheck message
+                socket.emit('healthcheck', { message: 'ping' });
+            });
+
+            socket.on('healthcheck-response', (data) => {
+                console.log('Healthcheck response:', data);
+                // You can show a toast or update UI here
+            });
+
+            socket.on('disconnect', () => {
+                console.log('WebSocket disconnected');
             });
         }
     </script>

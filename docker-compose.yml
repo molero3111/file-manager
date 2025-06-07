@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     image: file-manager-app-img  # Built once and used for replicas
     deploy:
-      replicas: 4
+      replicas: 1
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
@@ -14,14 +14,15 @@ services:
     env_file:
       - .env
     command: "php-fpm"
-    ports:
-      - "9000:9000"  # PHP-FPM listens on port 9000
     networks:
       - fm-network
+    depends_on:
+      - redis-fm
+      - db-fm
 
-  webserver:
+  webserver-fm:
     image: nginx:alpine
-    container_name: fm-webserver
+    container_name: webserver-fm
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -34,9 +35,9 @@ services:
     depends_on:
       - app
 
-  db:
+  db-fm:
     image: mysql:8.0
-    container_name: fm-db
+    container_name: db-fm
     restart: unless-stopped
     env_file:
       - .env
@@ -50,31 +51,16 @@ services:
     networks:
       - fm-network
 
-  redis:
+  redis-fm:
     image: redis:alpine
-    container_name: fm-redis
+    container_name: redis-fm
     restart: unless-stopped
     networks:
       - fm-network
-
-  queue:
-    image: file-manager-app-img
-    container_name: fm-queue
-    restart: unless-stopped
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
-      - filedata:/file-manager
-    command: php artisan queue:work
-    networks:
-      - fm-network
-    depends_on:
-      - app
-      - redis
   
-  horizon:
+  horizon-fm:
     image: file-manager-app-img
-    container_name: fm-horizon
+    container_name: horizon-fm
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
@@ -85,7 +71,20 @@ services:
       - fm-network
     depends_on:
       - app
-      - redis
+      - redis-fm
+      - db-fm
+
+  websocket-fm:
+    build:
+      context: ./websocket
+    container_name: websocket-fm
+    working_dir: /usr/src/app
+    volumes:
+      - ./websocket:/usr/src/app
+    environment:
+      - WS_PORT=3001
+    networks:
+      - fm-network
 
 volumes:
   dbdata:

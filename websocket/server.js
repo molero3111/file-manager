@@ -1,0 +1,29 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('healthcheck', (msg) => {
+    console.log('Healthcheck received:', msg);
+    socket.emit('healthcheck-response', { status: 'ok', received: msg });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+const PORT = process.env.WS_PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`WebSocket server listening on port ${PORT}`);
+});
