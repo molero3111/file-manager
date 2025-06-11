@@ -13,15 +13,11 @@ const io = new Server(server, {
     }
 });
 
-io.on('connection', async (socket) => {
-    // Validate token with Laravel API
-    if (!await validateSanctumToken(socket.handshake.auth.token)) {
-        console.log('Invalid token, disconnecting:', socket.id, socket.handshake.auth.token);
-        socket.disconnect(true);
-        return;
-    }
-
-    console.log('Authenticated client:', socket.id);
+io.on('connection', (socket) => {
+    // Register event handlers
+    socket.onAny((event, ...args) => {
+        console.log('Received event:', event, args);
+    });
 
     socket.on('healthcheck', (msg) => {
         console.log('Healthcheck received:', msg);
@@ -30,6 +26,19 @@ io.on('connection', async (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
+    });
+
+    // Authentication
+    validateSanctumToken(socket.handshake.auth.token)
+    .then(isAuthenticated => {
+        if (!isAuthenticated) {
+            console.log('Invalid token, disconnecting:', socket.id, socket.handshake.auth.token);
+            return socket.disconnect(true);
+        }
+        console.log('Authenticated client:', socket.id);
+    }).catch(err => {
+        console.error('Error validating token:', err);
+        socket.disconnect(true);
     });
 });
 

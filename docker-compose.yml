@@ -77,6 +77,8 @@ services:
   websocket-fm:
     build:
       context: ./websocket
+      dockerfile: Dockerfile
+    image: file-manager-websocket-img  # Built once and used for replicas
     container_name: websocket-fm
     working_dir: /usr/src/app
     volumes:

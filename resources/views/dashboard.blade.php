@@ -191,6 +191,7 @@
 
         function setupWebSocket() {
             const socket = io({
+                cors: { origin: "*" },
                 path: '/ws/socket.io',
                 transports: ['websocket'],
                 auth: {
