@@ -30,7 +30,6 @@
                 window.location.href = '/login';
             } else {
                 getFiles();
-                // setupPusher();
                 setupWebSocket();
             }
         });
@@ -124,7 +123,7 @@
         async function uploadFile() {
             const input = document.getElementById('fileInput');
             const file = input.files[0];
-            const chunkSize = 200 * 1024 * 1024; // 200MB
+            const chunkSize = {{ config('app.file_chunk_size') }} * 1024 * 1024;
             const totalChunks = Math.ceil(file.size / chunkSize);
             const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Unique file ID for chunked uploads
             const fileName = file.name;
@@ -162,36 +161,8 @@
             }
         }
 
-        function setupPusher() {
-            Pusher.logToConsole = true;
-
-            var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
-                cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
-            });
-
-            var channel = pusher.subscribe('file-upload');
-            channel.bind('upload-progress', function (data) {
-                if (data.progress > progressBar.getAttribute('aria-valuenow')) {
-                    progressBar.style.width = `${data.progress}%`;
-                    progressBar.setAttribute('aria-valuenow', data.progress);
-                    progressBar.innerText = `${data.progress.toFixed(2)}%`;
-                    if (data.progress == 100) {
-                        setTimeout(() => {
-                            progressBar.style.width = `0%`;
-                            progressBar.setAttribute('aria-valuenow', 0);
-                            progressBar.innerText = `0%`;
-                            uploadBtn.disabled = false;
-                            progressBarContainer.style.display = 'none';
-                            getFiles();
-                        }, 2000);
-                    }
-                }
-            });
-        }
-
         function setupWebSocket() {
             const socket = io({
-                cors: { origin: "*" },
                 path: '/ws/socket.io',
                 transports: ['websocket'],
                 auth: {
@@ -207,7 +178,26 @@
 
             socket.on('healthcheck-response', (data) => {
                 console.log('Healthcheck response:', data);
-                // You can show a toast or update UI here
+               
+            });
+
+            socket.on('upload-progress', function (data) {
+                console.info('Upload progress:', data);
+                 if (data.progress > progressBar.getAttribute('aria-valuenow')) {
+                    progressBar.style.width = `${data.progress}%`;
+                    progressBar.setAttribute('aria-valuenow', data.progress);
+                    progressBar.innerText = `${data.progress.toFixed(2)}%`;
+                    if (data.progress == 100) {
+                        setTimeout(() => {
+                            progressBar.style.width = `0%`;
+                            progressBar.setAttribute('aria-valuenow', 0);
+                            progressBar.innerText = `0%`;
+                            uploadBtn.disabled = false;
+                            progressBarContainer.style.display = 'none';
+                            getFiles();
+                        }, 2000);
+                    }
+                }
             });
 
             socket.on('disconnect', () => {

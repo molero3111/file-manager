@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Events\FileUploadProgress;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -12,6 +11,7 @@ class SendUploadProgress implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    protected $userId;
     protected $fileId;
     protected $chunkIndex;
     protected $totalChunks;
@@ -21,9 +21,10 @@ class SendUploadProgress implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($fileId, $chunkIndex, $totalChunks)
+    public function __construct($userId, $fileId, $chunkIndex, $totalChunks)
     {
         $this->fileId = $fileId;
+        $this->userId = $userId;
         $this->chunkIndex = $chunkIndex;
         $this->totalChunks = $totalChunks;
     }
@@ -35,9 +36,18 @@ class SendUploadProgress implements ShouldQueue
      */
     public function handle()
     {
-        event(new FileUploadProgress(
-            $this->fileId,
-            ($this->chunkIndex + 1) / $this->totalChunks * 100
-        ));
+        // Send HTTP POST to Socket.IO server
+        $client = new \GuzzleHttp\Client();
+        $client->post(config('app.socket_io_url'), [
+            'json' => [
+                'event' => 'upload-progress',
+                'userId' => $this->userId,
+                'data' => [
+                    'fileId' => $this->fileId,
+                    'progress' => ($this->chunkIndex + 1) / $this->totalChunks * 100
+                ],
+            ]
+        ]);
+
     }
 }

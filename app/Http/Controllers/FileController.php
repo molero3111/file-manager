@@ -40,7 +40,7 @@ class FileController extends Controller
         // Dispatch the job to send upload progress
         $totalChunks = (int) $request->header('X-Total-Chunks');
         $currentChunk = (int) $request->header('X-Chunk-Index');
-        SendUploadProgress::dispatch($fileId, $currentChunk, $totalChunks);
+        SendUploadProgress::dispatch(Auth::user()->id, $fileId, $currentChunk, $totalChunks);
 
         // Check if all chunks have been uploaded
         if ($currentChunk + 1 === $totalChunks) {
