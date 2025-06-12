@@ -24,3 +24,4 @@ node_modules
 filedata
 k8s/configmap-secrets/*.env
 **/file-manager-api-img.tar
+websocket/storage

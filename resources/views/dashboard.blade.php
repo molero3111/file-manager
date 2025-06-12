@@ -3,6 +3,7 @@
     <input type="file" id="fileInput" class="d-none" onchange="uploadFile()" />
     <button id="upload-btn" class="btn btn-primary mb-3"
         onclick="document.getElementById('fileInput').click()">Upload</button>
+    <button id="record-btn" class="btn btn-success mb-3" onclick="openRecorderModal()">Record Video</button>
     <div id="progress-bar-ontainer" class="progress mb-3" style="display: none;">
         <div id="uploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0"
             aria-valuemin="0" aria-valuemax="100">0%</div>
@@ -21,6 +22,19 @@
             <!-- Files will be populated here -->
         </tbody>
     </table>
+    <!-- Video Recorder Modal -->
+    <div id="recorderModal"
+        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:20px; border-radius:8px; max-width:400px; margin:auto; text-align:center;">
+            <video id="preview" width="320" height="240" autoplay muted style="background:#000"></video>
+            <div style="margin:10px 0;">
+                <button id="startRecBtn" class="btn btn-primary" onclick="startRecording()">Start</button>
+                <button id="stopRecBtn" class="btn btn-danger" onclick="stopRecording()" disabled>Stop</button>
+                <button class="btn btn-secondary" onclick="closeRecorderModal()">Close</button>
+            </div>
+            <div id="recStatus" style="margin-top:10px; color:green;"></div>
+        </div>
+    </div>
     <script>
         const progressBarContainer = document.getElementById('progress-bar-ontainer');
         const progressBar = document.getElementById('uploadProgressBar');
@@ -49,15 +63,15 @@
                     data.forEach(file => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${file.id}</td>
-                            <td>${file.name}</td>
-                            <td>${formatFileSize(file.size)}</td>
-                            <td>${file.created_at}</td>
-                            <td>
-                                <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
-                                <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
-                            </td>
-                        `;
+                                        <td>${file.id}</td>
+                                        <td>${file.name}</td>
+                                        <td>${formatFileSize(file.size)}</td>
+                                        <td>${file.created_at}</td>
+                                        <td>
+                                            <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
+                                            <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+                                        </td>
+                                    `;
                         tableBody.appendChild(row);
                     });
                 }
@@ -161,8 +175,9 @@
             }
         }
 
+        let socket, mediaRecorder, previewStream;
         function setupWebSocket() {
-            const socket = io({
+            socket = io({
                 path: '/ws/socket.io',
                 transports: ['websocket'],
                 auth: {
@@ -178,12 +193,12 @@
 
             socket.on('healthcheck-response', (data) => {
                 console.log('Healthcheck response:', data);
-               
+
             });
 
             socket.on('upload-progress', function (data) {
                 console.info('Upload progress:', data);
-                 if (data.progress > progressBar.getAttribute('aria-valuenow')) {
+                if (data.progress > progressBar.getAttribute('aria-valuenow')) {
                     progressBar.style.width = `${data.progress}%`;
                     progressBar.setAttribute('aria-valuenow', data.progress);
                     progressBar.innerText = `${data.progress.toFixed(2)}%`;
@@ -203,6 +218,67 @@
             socket.on('disconnect', () => {
                 console.log('WebSocket disconnected');
             });
+        }
+
+        function openRecorderModal() {
+            document.getElementById('recorderModal').style.display = 'flex';
+            document.getElementById('recStatus').innerText = '';
+            document.getElementById('startRecBtn').disabled = false;
+            document.getElementById('stopRecBtn').disabled = true;
+            // Start camera preview
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    previewStream = stream;
+                    document.getElementById('preview').srcObject = stream;
+                });
+        }
+
+        function closeRecorderModal() {
+            document.getElementById('recorderModal').style.display = 'none';
+            // Stop preview stream
+            if (previewStream) {
+                previewStream.getTracks().forEach(track => track.stop());
+                previewStream = null;
+            }
+        }
+
+        function startRecording() {
+            document.getElementById('startRecBtn').disabled = true;
+            document.getElementById('stopRecBtn').disabled = false;
+            document.getElementById('recStatus').innerText = 'Recording...';
+
+            // Use the preview stream for recording
+            mediaRecorder = new MediaRecorder(document.getElementById('preview').srcObject, { mimeType: 'video/webm' });
+
+            mediaRecorder.ondataavailable = function (e) {
+                if (e.data.size > 0) {
+                    socket.emit('video-chunk', e.data);
+                }
+            };
+
+            // Send "start" message with meta info
+            socket.emit('video-stream', {
+                action: 'start',
+                file_name: 'recorded_video',
+                file_type: 'video/webm',
+                type: 'welcome',
+                width: 320,
+                height: 240
+            });
+
+            mediaRecorder.start(1000); // 1 second per chunk
+        }
+
+        function stopRecording() {
+            document.getElementById('stopRecBtn').disabled = true;
+            document.getElementById('recStatus').innerText = 'Finalizing...';
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            socket.emit('video-stream', { action: 'end' });
+            setTimeout(() => {
+                closeRecorderModal();
+            }, 1500);
         }
     </script>
 @endsection
