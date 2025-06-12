@@ -30,7 +30,7 @@
                 window.location.href = '/login';
             } else {
                 getFiles();
-                setupPusher();
+                setupWebSocket();
             }
         });
 
@@ -49,15 +49,15 @@
                     data.forEach(file => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                        <td>${file.id}</td>
-                        <td>${file.name}</td>
-                        <td>${formatFileSize(file.size)}</td>
-                        <td>${file.created_at}</td>
-                        <td>
-                            <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
-                            <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
-                        </td>
-                    `;
+                            <td>${file.id}</td>
+                            <td>${file.name}</td>
+                            <td>${formatFileSize(file.size)}</td>
+                            <td>${file.created_at}</td>
+                            <td>
+                                <button class="btn btn-primary" onclick="downloadFile(${file.id})">Download</button>
+                                <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+                            </td>
+                        `;
                         tableBody.appendChild(row);
                     });
                 }
@@ -123,7 +123,7 @@
         async function uploadFile() {
             const input = document.getElementById('fileInput');
             const file = input.files[0];
-            const chunkSize = 200 * 1024 * 1024; // 200MB
+            const chunkSize = {{ config('app.file_chunk_size') }} * 1024 * 1024;
             const totalChunks = Math.ceil(file.size / chunkSize);
             const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Unique file ID for chunked uploads
             const fileName = file.name;
@@ -161,16 +161,29 @@
             }
         }
 
-        function setupPusher() {
-            Pusher.logToConsole = true;
-
-            var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
-                cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
+        function setupWebSocket() {
+            const socket = io({
+                path: '/ws/socket.io',
+                transports: ['websocket'],
+                auth: {
+                    token: localStorage.getItem('token')
+                }
             });
 
-            var channel = pusher.subscribe('file-upload');
-            channel.bind('upload-progress', function (data) {
-                if (data.progress > progressBar.getAttribute('aria-valuenow')) {
+            socket.on('connect', () => {
+                console.log('WebSocket connected:', socket.id);
+                // Send a healthcheck message
+                socket.emit('healthcheck', { message: 'ping' });
+            });
+
+            socket.on('healthcheck-response', (data) => {
+                console.log('Healthcheck response:', data);
+               
+            });
+
+            socket.on('upload-progress', function (data) {
+                console.info('Upload progress:', data);
+                 if (data.progress > progressBar.getAttribute('aria-valuenow')) {
                     progressBar.style.width = `${data.progress}%`;
                     progressBar.setAttribute('aria-valuenow', data.progress);
                     progressBar.innerText = `${data.progress.toFixed(2)}%`;
@@ -185,6 +198,10 @@
                         }, 2000);
                     }
                 }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('WebSocket disconnected');
             });
         }
     </script>

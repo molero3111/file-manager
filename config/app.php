@@ -186,4 +186,6 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    'file_chunk_size' => env('FILE_CHUNK_SIZE', 200), // Default chunk size of 200MB
+    'socket_io_url' => env('SOCKET_IO_URL', 'http://localhost:3001/api/emit'), // URL for Socket.IO server
 ];
